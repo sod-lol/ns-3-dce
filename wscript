@@ -115,6 +115,7 @@ def configure(conf):
     ns3waf.check_modules(conf, ['wifi', 'point-to-point', 'csma', 'mobility'], mandatory = False)
     ns3waf.check_modules(conf, ['point-to-point-layout'], mandatory = False)
     ns3waf.check_modules(conf, ['mpi', 'lte'], mandatory = False)
+    ns3waf.check_modules(conf, ['mmwave'], mandatory = False)
     ns3waf.check_modules(conf, ['visualizer'], mandatory = False)
     ns3waf.check_modules(conf, ['applications'], mandatory = False)
     ns3waf.check_modules(conf, ['fd-net-device'], mandatory = False)
