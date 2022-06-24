@@ -92,6 +92,7 @@ KernelSocketFdFactory::KernelSocketFdFactory ()
     m_logFile (0)
 {
   TypeId::LookupByNameFailSafe ("ns3::LteUeNetDevice", &m_lteUeTid);
+  TypeId::LookupByNameFailSafe ("ns3::MmWaveUeNetDevice", &m_mmWaveUeTid);
   m_variable = CreateObject<UniformRandomVariable> ();
 }
 
@@ -428,6 +429,7 @@ KernelSocketFdFactory::RxFromDevice (Ptr<NetDevice> device, Ptr<const Packet> p,
                                     uint16_t protocol, const Address & from,
                                     const Address &to, NetDevice::PacketType type)
 {
+  NS_LOG_FUNCTION("Received packet");
   struct SimDevice *dev = DevToDev (device);
   if (dev == 0)
     {
@@ -442,7 +444,7 @@ KernelSocketFdFactory::RxFromDevice (Ptr<NetDevice> device, Ptr<const Packet> p,
     unsigned char   h_source[6];
     uint16_t        h_proto;
   } *hdr = (struct ethhdr *)packet.buffer;
-  if (device->GetInstanceTypeId () != m_lteUeTid)
+  if (device->GetInstanceTypeId () != m_lteUeTid && device->GetInstanceTypeId () != m_mmWaveUeTid)
     {
       Mac48Address realFrom = Mac48Address::ConvertFrom (from);
       realFrom.CopyTo (hdr->h_source);
@@ -541,6 +543,11 @@ KernelSocketFdFactory::NotifyAddDeviceTask (Ptr<NetDevice> device)
   m_devices.push_back (std::make_pair (device,dev));
   Ptr<Node> node = GetObject<Node> ();
   if (device->GetInstanceTypeId () == m_lteUeTid)
+    {
+      node->RegisterProtocolHandler (MakeCallback (&KernelSocketFdFactory::RxFromDevice, this),
+                                     0, device, false);
+    }
+  else if (device->GetInstanceTypeId () == m_mmWaveUeTid)
     {
       node->RegisterProtocolHandler (MakeCallback (&KernelSocketFdFactory::RxFromDevice, this),
                                      0, device, false);
