@@ -19,10 +19,6 @@ def options(opt):
                    help=('Path to the prefix where the kernel wrapper headers are installed'),
                    default=None,
                    dest='kernel_stack', type="string")
-    opt.add_option('--enable-mpi',
-                   help=('Enable MPI and distributed simulation support'),
-                   dest='enable_mpi', action='store_true',
-                   default=False)
     opt.add_option('--enable-opt',
                    help=('Enable use of DCE and NS-3 optimized compilation'),
                    dest='enable_opt', action='store_true',
@@ -101,7 +97,8 @@ def configure(conf):
     ns3waf.check_modules(conf, ['point-to-point', 'tap-bridge', 'netanim'], mandatory = False)
     ns3waf.check_modules(conf, ['wifi', 'point-to-point', 'csma', 'mobility'], mandatory = False)
     ns3waf.check_modules(conf, ['point-to-point-layout'], mandatory = False)
-    ns3waf.check_modules(conf, ['mpi', 'lte'], mandatory = False)
+    ns3waf.check_modules(conf, ['lte'], mandatory = False)
+    ns3waf.check_modules(conf, ['mmwave'], mandatory = False)
     ns3waf.check_modules(conf, ['visualizer'], mandatory = False)
     ns3waf.check_modules(conf, ['applications'], mandatory = False)
     ns3waf.check_modules(conf, ['fd-net-device'], mandatory = False)
@@ -112,10 +109,6 @@ def configure(conf):
     conf.check(header_name='sys/stat.h', define_name='HAVE_SYS_STAT_H', mandatory=False)
     conf.check(header_name='dirent.h', define_name='HAVE_DIRENT_H', mandatory=False)
 
-    if Options.options.enable_mpi:
-         conf.env.append_value ('DEFINES', 'DCE_MPI=1')
-         conf.env['MPI'] = '1'
-         
     conf.env.prepend_value('LINKFLAGS', '-Wl,--no-as-needed')
     conf.env.append_value('LINKFLAGS', '-pthread')
     conf.check (lib='dl', mandatory = True)
