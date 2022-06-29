@@ -40,6 +40,7 @@
 #include "ns3/netanim-module.h"
 #include "ns3/constant-position-mobility-model.h"
 #include "ns3/config-store-module.h"
+#include "ns3/isotropic-antenna-model.h"
 #include <iostream>
 #include <ctime>
 #include <stdlib.h>
@@ -109,7 +110,7 @@ PrintPid (ApplicationContainer apps, DceApplicationHelper dce)
 static ns3::GlobalValue g_runNumber ("runNumber", "Run number for rng",
     ns3::UintegerValue(1), ns3::MakeUintegerChecker<uint32_t>());
 static ns3::GlobalValue g_dist ("dist", "Distance from eNB",
-    ns3::UintegerValue(190), ns3::MakeUintegerChecker<uint32_t>());
+    ns3::UintegerValue(40), ns3::MakeUintegerChecker<uint32_t>());
 static ns3::GlobalValue g_outPath("outPath",
     "The path of output log files",
     ns3::StringValue("./"), ns3::MakeStringChecker());
@@ -173,8 +174,8 @@ int main (int argc, char *argv[])
   cmd.Parse(argc, argv);
 
   std::string bufSize = "";
-  double stopTime = 23.0;
-  std::string p2pdelay = "0ms";
+  double stopTime = 33.0;
+  std::string p2pdelay = "10ms";
 
   UintegerValue uintegerValue;
   StringValue stringValue;
@@ -226,7 +227,7 @@ int main (int argc, char *argv[])
 
   Config::SetDefault ("ns3::LteRlcUm::MaxTxBufferSize", UintegerValue (20 * 1024 * 1024));
   Config::SetDefault ("ns3::LteRlcUmLowLat::MaxTxBufferSize", UintegerValue (20 * 1024 * 1024));
-  Config::SetDefault ("ns3::LteRlcAm::MaxTxBufferSize", UintegerValue (20 * 1024 * 1024));
+  Config::SetDefault ("ns3::LteRlcAm::MaxTxBufferSize", UintegerValue (20 * 1024  * 1024));
   Config::SetDefault ("ns3::LteHelper::UseIdealRrc", BooleanValue (false));
 
   Config::SetDefault ("ns3::MmWaveHelper::RlcAmEnabled", BooleanValue(rlcAmEnabled));
@@ -235,21 +236,32 @@ int main (int argc, char *argv[])
   Config::SetDefault ("ns3::MmWaveFlexTtiMaxWeightMacScheduler::HarqEnabled", BooleanValue(harqEnabled));
   Config::SetDefault ("ns3::MmWaveFlexTtiMaxWeightMacScheduler::FixedTti", BooleanValue(fixedTti));
   Config::SetDefault ("ns3::MmWaveFlexTtiMaxWeightMacScheduler::SymPerSlot", UintegerValue(6));
-  /*Config::SetDefault ("ns3::MmWavePhyMacCommon::ResourceBlockNum", UintegerValue(1));
-  Config::SetDefault ("ns3::MmWavePhyMacCommon::ChunkPerRB", UintegerValue(72));
-  Config::SetDefault ("ns3::MmWavePhyMacCommon::SymbolsPerSubframe", UintegerValue(symPerSf));
-  Config::SetDefault ("ns3::MmWavePhyMacCommon::SubframePeriod", DoubleValue(sfPeriod));
-  Config::SetDefault ("ns3::MmWavePhyMacCommon::TbDecodeLatency", UintegerValue(200.0));
+  //Config::SetDefault ("ns3::MmWaveEnbPhy::TxPower", DoubleValue (60));
+  //Config::SetDefault ("ns3::MmWaveUePhy::TxPower", DoubleValue (60));
+  //Config::SetDefault ("ns3::MmWavePhyMacCommon::ResourceBlockNum", UintegerValue(1));
+  //Config::SetDefault ("ns3::MmWavePhyMacCommon::ChunkPerRB", UintegerValue(72));
+  //Config::SetDefault ("ns3::MmWavePhyMacCommon::SymbolsPerSubframe", UintegerValue(symPerSf));
+  
+  //Config::SetDefault ("ns3::MmWavePhyMacCommon::SubframePeriod", DoubleValue(sfPeriod));
+  //Config::SetDefault ("ns3::MmWavePhyMacCommon::TbDecodeLatency", UintegerValue(200.0));
   Config::SetDefault ("ns3::MmWavePhyMacCommon::NumHarqProcess", UintegerValue(100));
-  Config::SetDefault ("ns3::MmWaveBeamforming::LongTermUpdatePeriod", TimeValue (MilliSeconds (100.0)));*/
+  Config::SetDefault ("ns3::MmWavePhyMacCommon::Numerology", EnumValue(3));
+  Config::SetDefault ("ns3::MmWavePhyMacCommon::Bandwidth", DoubleValue (400e6));
+  /*Config::SetDefault ("ns3::MmWaveBeamforming::LongTermUpdatePeriod", TimeValue (MilliSeconds (100.0)));*/
+  Config::SetDefault ("ns3::ThreeGppChannelModel::UpdatePeriod", TimeValue (MilliSeconds (100.0)));
   Config::SetDefault ("ns3::LteEnbRrc::SystemInformationPeriodicity", TimeValue (MilliSeconds (5.0)));
   Config::SetDefault ("ns3::LteEnbRrc::SrsPeriodicity", UintegerValue (320));
   Config::SetDefault ("ns3::LteEnbRrc::FirstSibTime", UintegerValue (2));
   Config::SetDefault ("ns3::LteHelper::UseIdealRrc", BooleanValue (false));
-  Config::SetDefault ("ns3::RadioBearerStatsCalculator::DlRlcOutputFilename", StringValue        (path + dlRlcOutName   + "_" + seedSetStr + "_" + runSetStr + "_" + time_str + extension));
-  Config::SetDefault ("ns3::RadioBearerStatsCalculator::UlRlcOutputFilename", StringValue        (path + ulRlcOutName   + "_" + seedSetStr + "_" + runSetStr + "_" + time_str + extension));
-  Config::SetDefault ("ns3::RadioBearerStatsCalculator::DlPdcpOutputFilename", StringValue       (path + dlPdcpOutName + "_" + seedSetStr + "_" + runSetStr + "_" + time_str + extension));
-  Config::SetDefault ("ns3::RadioBearerStatsCalculator::UlPdcpOutputFilename", StringValue       (path + ulPdcpOutName + "_" + seedSetStr + "_" + runSetStr + "_" + time_str + extension));
+  //Config::SetDefault ("ns3::RadioBearerStatsCalculator::DlRlcOutputFilename", StringValue        (path + dlRlcOutName   + "_" + seedSetStr + "_" + runSetStr + "_" + time_str + extension));
+  //Config::SetDefault ("ns3::RadioBearerStatsCalculator::UlRlcOutputFilename", StringValue        (path + ulRlcOutName   + "_" + seedSetStr + "_" + runSetStr + "_" + time_str + extension));
+  //Config::SetDefault ("ns3::RadioBearerStatsCalculator::DlPdcpOutputFilename", StringValue       (path + dlPdcpOutName + "_" + seedSetStr + "_" + runSetStr + "_" + time_str + extension));
+  //Config::SetDefault ("ns3::RadioBearerStatsCalculator::UlPdcpOutputFilename", StringValue       (path + ulPdcpOutName + "_" + seedSetStr + "_" + runSetStr + "_" + time_str + extension));
+  //Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::X2LinkDelay", TimeValue (MicroSeconds (500)));
+  //Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::X2LinkDataRate", DataRateValue (DataRate ("1000Gb/s")));
+  //Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::X2LinkMtu",  UintegerValue (10000));
+  //Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::S1uLinkDelay", TimeValue (MicroSeconds (1000)));
+  //Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::S1apLinkDelay", TimeValue (MicroSeconds (10000)));
 
   Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::S1uLinkDelay", TimeValue (Seconds(0.001)));
   Config::SetDefault ("ns3::PointToPointEpcHelper::S1uLinkDelay", TimeValue (Seconds(0.001)));
@@ -274,11 +286,18 @@ int main (int argc, char *argv[])
   NetDeviceContainer devices1, devices2, devices3;
 
   // mmWave helper
+  //Config::SetDefault ("ns3::PhasedArrayModel::AntennaElement", PointerValue (CreateObject<IsotropicAntennaModel> ()));
   Ptr<MmWaveHelper> mmWaveHelper = CreateObject<MmWaveHelper> ();
   mmWaveHelper->SetAttribute("BasicCellId", UintegerValue(7));
-  //mmWaveHelper->SetAttribute("BasicImsi", UintegerValue(0));
+  mmWaveHelper->SetAttribute("BasicImsi", UintegerValue(0));
   mmWaveHelper->SetHarqEnabled (harqEnabled);
-  //mmWaveHelper->SetAttribute ("PathlossModel", StringValue ("ns3::HybridBuildingsPropagationLossModel"));
+  mmWaveHelper->SetSchedulerType ("ns3::MmWaveFlexTtiMacScheduler");
+  //mmWaveHelper->SetUePhasedArrayModelAttribute ("NumColumns" , UintegerValue (std::sqrt (16)));
+  //mmWaveHelper->SetUePhasedArrayModelAttribute ("NumRows" , UintegerValue (std::sqrt (16)));
+  //mmWaveHelper->SetEnbPhasedArrayModelAttribute ("NumColumns" , UintegerValue (std::sqrt (64)));
+  //mmWaveHelper->SetEnbPhasedArrayModelAttribute ("NumRows" , UintegerValue (std::sqrt (64)));
+  //mmWaveHelper->SetAttribute ("PathlossModel", StringValue ("ns3::"));
+  mmWaveHelper->SetChannelConditionModelType ("ns3::BuildingsChannelConditionModel");
   mmWaveHelper->Initialize();
   //mmWaveHelper->SetAttribute("CenterFreq", DoubleValue(28.0e9));
   Ptr<MmWavePointToPointEpcHelper> mmWaveEpcHelper = CreateObject<MmWavePointToPointEpcHelper> ();
@@ -291,10 +310,11 @@ int main (int argc, char *argv[])
 
   // // LTE helper
   Ptr<LteHelper> lteHelper_2 = CreateObject<LteHelper> ();
-  /*lteHelper_2->SetAttribute ("PathlossModel", StringValue ("ns3::HybridBuildingsPropagationLossModel"));
+  lteHelper_2->SetAttribute ("PathlossModel", StringValue ("ns3::HybridBuildingsPropagationLossModel"));
+  //lteHelper_2->SetChannelConditionModelType ("ns3::BuildingsChannelConditionModel");
   lteHelper_2->SetPathlossModelAttribute ("ShadowSigmaExtWalls", DoubleValue (0));
   lteHelper_2->SetPathlossModelAttribute ("ShadowSigmaOutdoor", DoubleValue (6));
-  lteHelper_2->SetPathlossModelAttribute ("ShadowSigmaIndoor", DoubleValue (8));*/
+  lteHelper_2->SetPathlossModelAttribute ("ShadowSigmaIndoor", DoubleValue (8));
   lteHelper_2->SetSpectrumChannelType ("ns3::MultiModelSpectrumChannel");
   Ptr<PointToPointEpcHelper> epcHelper_2 = CreateObject<PointToPointEpcHelper> ();
   epcHelper_2->Initialize();
@@ -321,14 +341,14 @@ int main (int argc, char *argv[])
   // set UE distance
   for(uint32_t i = 0; i < numberOfNodes; i++)
   {
-      setPos (nodes.Get (i), 100, -20, 1);
+      setPos (nodes.Get (i), 60, -20, 1);
       setPos (nodes.Get (numberOfNodes + i), 200, 200, 0);
       ueNodes.Add(nodes.Get(i));
       serverNodes.Add(nodes.Get(i+numberOfNodes));
   }
 
-  double x_min = 80.0;
-  double x_max = 90.0;
+  double x_min = 40.0;
+  double x_max = 50.0;
   double y_min = -10.0;
   double y_max = 10.0;
   double z_min = 0.0;
@@ -343,7 +363,8 @@ int main (int argc, char *argv[])
 
   BuildingsHelper::Install (nodes);
 
-  Simulator::Schedule(Seconds(2), &ChangeSpeed, nodes.Get(0), Vector(0, 0, 0)); // start UE movement
+  Simulator::Schedule(Seconds(2), &ChangeSpeed, nodes.Get(0), Vector(0, 2, 0)); // start UE movement
+  Simulator::Schedule(Seconds(22), &ChangeSpeed, nodes.Get(0), Vector(-2, 0, 0)); // start UE movement
 
   // Left link: H1 <-> mmWave eNB
   NodeContainer enbNodes;
@@ -479,10 +500,10 @@ int main (int argc, char *argv[])
   stack.SysctlSet (nodes, ".net.mptcp.mptcp_checksum",
                     "1");
   stack.SysctlSet (nodes, ".net.ipv4.tcp_rmem",
-                   "4096 99999999 204217728");
+                   "4096 104857600 204217728");
   //                       "4096 87380 " +bufSize);
   stack.SysctlSet (nodes, ".net.ipv4.tcp_wmem",
-                   "4096 99999999 204217728");
+                   "4096 104857600 204217728");
   // stack.SysctlSet (nodes, ".net.ipv4.tcp_mem",
   //                  "768174 10242330 15363480");
   stack.SysctlSet (nodes, ".net.ipv4.tcp_mem",
@@ -518,12 +539,14 @@ int main (int argc, char *argv[])
   stack.SysctlSet (nodes, ".net.ipv4.tcp_reordering",
                     "0");
 
+  LinuxStackHelper::SysctlGet (nodes.Get (1), Seconds (1),
+                               ".net.ipv4.tcp_available_congestion_control", &PrintTcpFlags);
   for (int i = 0; i < numberOfNodes; ++i)
   {
     DceApplicationHelper dce;
     ApplicationContainer apps;
 
-    dce.SetStackSize (1 << 20);
+    dce.SetStackSize (1 << 30);
     // Launch iperf client on node 0
     dce.SetBinary ("iperf");
     dce.ResetArguments ();
@@ -534,7 +557,7 @@ int main (int argc, char *argv[])
     dce.AddArgument ("-i");
     dce.AddArgument ("0.1");
     dce.AddArgument ("--time");
-    dce.AddArgument ("20");
+    dce.AddArgument ("30");
     dce.AddArgument ("-f");
     dce.AddArgument ("m");
     //dce.AddArgument ("-l");
@@ -546,7 +569,7 @@ int main (int argc, char *argv[])
 
     Simulator::Schedule(Seconds(2.1), &PrintPid, apps, dce);
 
-    dce.SetStackSize (1 << 20);
+    dce.SetStackSize (1 << 30);
     // Launch iperf server on node 1
     dce.SetBinary ("iperf");
     dce.ResetArguments ();
@@ -561,15 +584,16 @@ int main (int argc, char *argv[])
     apps.Start (Seconds (1.5));
   }
 
-  lteHelper_2->EnablePdcpTraces ();
-  lteHelper_2->EnableRlcTraces ();
+  //lteHelper_2->EnablePdcpTraces ();
+  //lteHelper_2->EnableRlcTraces ();
+  //mmWaveHelper->EnableTraces ();
   //Config::Connect ("/NodeList/*/DeviceList/*/ns3::LteEnbRrc/ConnectionEstablished",
     //               MakeCallback (&NotifyConnectionEstablishedEnb));
   //Config::Connect ("/NodeList/*/DeviceList/*/ns3::LteUeRrc/ConnectionEstablished",
 //                   MakeCallback (&NotifyConnectionEstablishedUe));
 
  
-pointToPoint.EnablePcapAll("lte-mmwave2", false);
+  //pointToPoint.EnablePcapAll("lte-mmwave2", false);
 
   // Output config store to txt format
   Config::SetDefault ("ns3::ConfigStore::Filename", StringValue ("output-attributes.txt"));
@@ -579,7 +603,7 @@ pointToPoint.EnablePcapAll("lte-mmwave2", false);
   outputConfig2.ConfigureDefaults ();
   outputConfig2.ConfigureAttributes ();
 
-  Simulator::Stop (Seconds (stopTime));
+  Simulator::Stop (Seconds (33));
   Simulator::Run ();
   Simulator::Destroy ();
 
