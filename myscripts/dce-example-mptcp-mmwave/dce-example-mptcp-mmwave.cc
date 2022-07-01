@@ -245,8 +245,8 @@ int main (int argc, char *argv[])
   //Config::SetDefault ("ns3::MmWavePhyMacCommon::SubframePeriod", DoubleValue(sfPeriod));
   Config::SetDefault ("ns3::MmWavePhyMacCommon::TbDecodeLatency", UintegerValue(200.0));
   Config::SetDefault ("ns3::MmWavePhyMacCommon::NumHarqProcess", UintegerValue(100));
-  Config::SetDefault ("ns3::MmWavePhyMacCommon::Numerology", EnumValue(2));
-  Config::SetDefault ("ns3::MmWavePhyMacCommon::Bandwidth", DoubleValue (200e6));
+  Config::SetDefault ("ns3::MmWavePhyMacCommon::Numerology", EnumValue(3));
+  Config::SetDefault ("ns3::MmWavePhyMacCommon::Bandwidth", DoubleValue (400e6));
   /*Config::SetDefault ("ns3::MmWaveBeamforming::LongTermUpdatePeriod", TimeValue (MilliSeconds (100.0)));*/
   Config::SetDefault ("ns3::ThreeGppChannelModel::UpdatePeriod", TimeValue (MilliSeconds (100.0)));
   Config::SetDefault ("ns3::LteEnbRrc::SystemInformationPeriodicity", TimeValue (MilliSeconds (5.0)));
@@ -261,11 +261,11 @@ int main (int argc, char *argv[])
   //Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::X2LinkDataRate", DataRateValue (DataRate ("1000Gb/s")));
   //Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::X2LinkMtu",  UintegerValue (10000));
   //Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::S1uLinkDelay", TimeValue (MicroSeconds (1000)));
-  Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::S1apLinkDelay", TimeValue (MicroSeconds (10000)));
+  Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::S1apLinkDelay", TimeValue (MicroSeconds (12000)));
 
-  Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::S1uLinkDelay", TimeValue (MilliSeconds (2)));
-  Config::SetDefault ("ns3::PointToPointEpcHelper::S1uLinkDelay", TimeValue (MilliSeconds (2)));
-  Config::SetDefault ("ns3::PointToPointEpcHelper::S1apLinkDelay", TimeValue (MicroSeconds (10000)));
+  Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::S1uLinkDelay", TimeValue (MilliSeconds (1)));
+  Config::SetDefault ("ns3::PointToPointEpcHelper::S1uLinkDelay", TimeValue (MilliSeconds (1)));
+  Config::SetDefault ("ns3::PointToPointEpcHelper::S1apLinkDelay", TimeValue (MicroSeconds (12000)));
 
   GlobalValue::Bind ("ChecksumEnabled", BooleanValue (true));
   NodeContainer nodes, routers;
