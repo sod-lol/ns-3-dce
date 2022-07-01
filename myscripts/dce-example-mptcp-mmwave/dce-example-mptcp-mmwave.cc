@@ -243,10 +243,10 @@ int main (int argc, char *argv[])
   //Config::SetDefault ("ns3::MmWavePhyMacCommon::SymbolsPerSubframe", UintegerValue(symPerSf));
   
   //Config::SetDefault ("ns3::MmWavePhyMacCommon::SubframePeriod", DoubleValue(sfPeriod));
-  //Config::SetDefault ("ns3::MmWavePhyMacCommon::TbDecodeLatency", UintegerValue(200.0));
+  Config::SetDefault ("ns3::MmWavePhyMacCommon::TbDecodeLatency", UintegerValue(200.0));
   Config::SetDefault ("ns3::MmWavePhyMacCommon::NumHarqProcess", UintegerValue(100));
-  Config::SetDefault ("ns3::MmWavePhyMacCommon::Numerology", EnumValue(3));
-  Config::SetDefault ("ns3::MmWavePhyMacCommon::Bandwidth", DoubleValue (400e6));
+  Config::SetDefault ("ns3::MmWavePhyMacCommon::Numerology", EnumValue(2));
+  Config::SetDefault ("ns3::MmWavePhyMacCommon::Bandwidth", DoubleValue (200e6));
   /*Config::SetDefault ("ns3::MmWaveBeamforming::LongTermUpdatePeriod", TimeValue (MilliSeconds (100.0)));*/
   Config::SetDefault ("ns3::ThreeGppChannelModel::UpdatePeriod", TimeValue (MilliSeconds (100.0)));
   Config::SetDefault ("ns3::LteEnbRrc::SystemInformationPeriodicity", TimeValue (MilliSeconds (5.0)));
@@ -263,8 +263,9 @@ int main (int argc, char *argv[])
   //Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::S1uLinkDelay", TimeValue (MicroSeconds (1000)));
   //Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::S1apLinkDelay", TimeValue (MicroSeconds (10000)));
 
-  Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::S1uLinkDelay", TimeValue (Seconds(0.001)));
-  Config::SetDefault ("ns3::PointToPointEpcHelper::S1uLinkDelay", TimeValue (Seconds(0.001)));
+  Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::S1uLinkDelay", TimeValue (MilliSeconds (15)));
+  Config::SetDefault ("ns3::PointToPointEpcHelper::S1uLinkDelay", TimeValue (MilliSeconds (15)));
+  //Config::SetDefault ("ns3::PointToPointEpcHelper::S1apLinkDelay", TimeValue (MicroSeconds (10000)));
 
   GlobalValue::Bind ("ChecksumEnabled", BooleanValue (true));
   NodeContainer nodes, routers;
@@ -546,6 +547,19 @@ int main (int argc, char *argv[])
     DceApplicationHelper dce;
     ApplicationContainer apps;
 
+/*
+    DceApplicationHelper dce1;
+    ApplicationContainer pingApp;
+    dce1.SetStackSize (1<<24);
+    dce1.SetBinary("ping");
+    dce1.ResetArguments();
+    dce1.AddArgument("10.2." + SSTR(i) + ".1");
+    dce1.AddArgument("-c 10");
+    dce1.AddArgument("-s 10000");
+    pingApp = dce1.Install (nodes.Get (i));
+    pingApp.Start (Seconds (0.7));
+    Simulator::Schedule(Seconds(1), &PrintPid, pingApp, dce1);
+*/
     dce.SetStackSize (1 << 30);
     // Launch iperf client on node 0
     dce.SetBinary ("iperf");
@@ -593,7 +607,7 @@ int main (int argc, char *argv[])
 //                   MakeCallback (&NotifyConnectionEstablishedUe));
 
  
-  //pointToPoint.EnablePcapAll("lte-mmwave2", false);
+  pointToPoint.EnablePcapAll("lte-mmwave2", false);
 
   // Output config store to txt format
   Config::SetDefault ("ns3::ConfigStore::Filename", StringValue ("output-attributes.txt"));
