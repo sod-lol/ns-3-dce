@@ -220,7 +220,7 @@ int main (int argc, char *argv[])
   bool harqEnabled = booleanValue.Get();
   GlobalValue::GetValueByName("rlcAmEnabled", booleanValue);
   bool rlcAmEnabled = booleanValue.Get();
-  bool fixedTti = false;
+  bool fixedTti = true;
   unsigned symPerSf = 24;
   double sfPeriod = 100.0;
   uint32_t bufferSize = 10;
@@ -261,11 +261,11 @@ int main (int argc, char *argv[])
   //Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::X2LinkDataRate", DataRateValue (DataRate ("1000Gb/s")));
   //Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::X2LinkMtu",  UintegerValue (10000));
   //Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::S1uLinkDelay", TimeValue (MicroSeconds (1000)));
-  //Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::S1apLinkDelay", TimeValue (MicroSeconds (10000)));
+  Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::S1apLinkDelay", TimeValue (MicroSeconds (10000)));
 
-  Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::S1uLinkDelay", TimeValue (MilliSeconds (15)));
-  Config::SetDefault ("ns3::PointToPointEpcHelper::S1uLinkDelay", TimeValue (MilliSeconds (15)));
-  //Config::SetDefault ("ns3::PointToPointEpcHelper::S1apLinkDelay", TimeValue (MicroSeconds (10000)));
+  Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::S1uLinkDelay", TimeValue (MilliSeconds (2)));
+  Config::SetDefault ("ns3::PointToPointEpcHelper::S1uLinkDelay", TimeValue (MilliSeconds (2)));
+  Config::SetDefault ("ns3::PointToPointEpcHelper::S1apLinkDelay", TimeValue (MicroSeconds (10000)));
 
   GlobalValue::Bind ("ChecksumEnabled", BooleanValue (true));
   NodeContainer nodes, routers;
@@ -365,7 +365,7 @@ int main (int argc, char *argv[])
   BuildingsHelper::Install (nodes);
 
   Simulator::Schedule(Seconds(2), &ChangeSpeed, nodes.Get(0), Vector(0, 2, 0)); // start UE movement
-  Simulator::Schedule(Seconds(22), &ChangeSpeed, nodes.Get(0), Vector(-2, 0, 0)); // start UE movement
+  Simulator::Schedule(Seconds(22), &ChangeSpeed, nodes.Get(0), Vector(-2, 4.5, 0)); // start UE movement
 
   // Left link: H1 <-> mmWave eNB
   NodeContainer enbNodes;
