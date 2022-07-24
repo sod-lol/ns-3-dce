@@ -51,7 +51,7 @@
         ( std::ostringstream() << std::dec << x ) ).str()
 
 using namespace ns3;
-NS_LOG_COMPONENT_DEFINE ("DceMptcpMmWave");
+NS_LOG_COMPONENT_DEFINE ("FirstScenario");
 using namespace ns3::mmwave;
 void setPos (Ptr<Node> n, int x, int y, int z)
 {
@@ -61,6 +61,28 @@ void setPos (Ptr<Node> n, int x, int y, int z)
   loc->SetPosition (locVec2);
   loc->SetVelocity(Vector(0,0,0));
 
+}
+
+void
+PrintGnuplottableBuildingListToFile (std::string filename)
+{
+  std::ofstream outFile;
+  outFile.open (filename.c_str (), std::ios_base::out | std::ios_base::trunc);
+  if (!outFile.is_open ())
+    {
+      NS_LOG_ERROR ("Can't open file " << filename);
+      return;
+    }
+  uint32_t index = 0;
+  for (BuildingList::Iterator it = BuildingList::Begin (); it != BuildingList::End (); ++it)
+    {
+      ++index;
+      Box box = (*it)->GetBoundaries ();
+      outFile << "set object " << index
+              << " rect from " << box.xMin  << "," << box.yMin
+              << " to "   << box.xMax  << "," << box.yMax
+              << std::endl;
+    }
 }
 
 void randomPos (Ptr<Node> n, int R_max, int z)
@@ -114,9 +136,6 @@ static ns3::GlobalValue g_dist ("dist", "Distance from eNB",
 static ns3::GlobalValue g_outPath("outPath",
     "The path of output log files",
     ns3::StringValue("./"), ns3::MakeStringChecker());
-static ns3::GlobalValue g_congestionControl("congestionControl",
-    "CC algorithm",
-    ns3::StringValue("cubic"), ns3::MakeStringChecker());
 static ns3::GlobalValue g_rlcAmEnabled("rlcAmEnabled", "If true, use RLC AM, else use RLC UM",
     ns3::BooleanValue(true), ns3::MakeBooleanChecker());
 static ns3::GlobalValue g_harqEnabled("harqEnabled",
@@ -162,13 +181,51 @@ NotifyConnectionEstablishedEnb (std::string context,
     }*/
 }
 
+typedef struct  
+{
+  double x1;
+  double x2;
+  double y1;
+  double y2;
+  double z1;
+  double z2;
+} bulding_cordination_t;
+
+Ptr<Building> set_and_install_building(bulding_cordination_t b_cord, NodeContainer nodes)
+{
+  Ptr<Building> b = CreateObject <Building> ();
+  b->SetBoundaries (Box (b_cord.x1,
+			 b_cord.x2,
+			 b_cord.y1,
+			 b_cord.y2,
+			 b_cord.z1, 
+			 b_cord.z2
+		    )
+  );
+
+  b->SetBuildingType (Building::Residential);
+  b->SetExtWallsType (Building::ConcreteWithWindows);
+  b->SetNFloors (3);
+  b->SetNRoomsX (3);
+  b->SetNRoomsY (2);
+  
+  return b;
+}
+
 int main (int argc, char *argv[])
 {
-  LogComponentEnable ("DceMptcpMmWave", LOG_LEVEL_ALL);
+  LogComponentEnable ("FirstScenario", LOG_LEVEL_ALL);
 
   // Command line arguments
+  std::string cc_algo;
+  std::string path_m;
+  std::string sche_algo;
+
   CommandLine cmd;
-  //cmd.AddValue("numberOfNodes", "Number of eNodeBs + UE pairs", numberOfNodes);
+  cmd.AddValue("ccAlgo", "Congestion Control algorithm", cc_algo);
+  cmd.AddValue("pathM", "Path manager for mptcp", path_m);
+  cmd.AddValue("scheAlgo", "Scheduler algorithm", sche_algo);
+  
   //cmd.AddValue("simTime", "Total duration of the simulation [s])", simTime);
   //cmd.AddValue("interPacketInterval", "Inter packet interval [ms])", interPacketInterval);
   cmd.Parse(argc, argv);
@@ -211,10 +268,6 @@ int main (int argc, char *argv[])
   strftime(buffer,80,"%d_%m_%Y_%I_%M_%S",timeinfo);
   std::string time_str(buffer);
 
-  // Congestion Control algorithm
-  GlobalValue::GetValueByName("congestionControl", stringValue);
-  std::string ccAlg = stringValue.Get();
-
   // mmWave config
   GlobalValue::GetValueByName("harqEnabled", booleanValue);
   bool harqEnabled = booleanValue.Get();
@@ -236,13 +289,7 @@ int main (int argc, char *argv[])
   Config::SetDefault ("ns3::MmWaveFlexTtiMaxWeightMacScheduler::HarqEnabled", BooleanValue(harqEnabled));
   Config::SetDefault ("ns3::MmWaveFlexTtiMaxWeightMacScheduler::FixedTti", BooleanValue(fixedTti));
   Config::SetDefault ("ns3::MmWaveFlexTtiMaxWeightMacScheduler::SymPerSlot", UintegerValue(6));
-  //Config::SetDefault ("ns3::MmWaveEnbPhy::TxPower", DoubleValue (60));
-  //Config::SetDefault ("ns3::MmWaveUePhy::TxPower", DoubleValue (60));
-  //Config::SetDefault ("ns3::MmWavePhyMacCommon::ResourceBlockNum", UintegerValue(1));
-  //Config::SetDefault ("ns3::MmWavePhyMacCommon::ChunkPerRB", UintegerValue(72));
-  //Config::SetDefault ("ns3::MmWavePhyMacCommon::SymbolsPerSubframe", UintegerValue(symPerSf));
   
-  //Config::SetDefault ("ns3::MmWavePhyMacCommon::SubframePeriod", DoubleValue(sfPeriod));
   Config::SetDefault ("ns3::MmWavePhyMacCommon::TbDecodeLatency", UintegerValue(200.0));
   Config::SetDefault ("ns3::MmWavePhyMacCommon::NumHarqProcess", UintegerValue(100));
   Config::SetDefault ("ns3::MmWavePhyMacCommon::Numerology", EnumValue(3));
@@ -253,10 +300,10 @@ int main (int argc, char *argv[])
   Config::SetDefault ("ns3::LteEnbRrc::SrsPeriodicity", UintegerValue (320));
   Config::SetDefault ("ns3::LteEnbRrc::FirstSibTime", UintegerValue (2));
   Config::SetDefault ("ns3::LteHelper::UseIdealRrc", BooleanValue (false));
-  //Config::SetDefault ("ns3::RadioBearerStatsCalculator::DlRlcOutputFilename", StringValue        (path + dlRlcOutName   + "_" + seedSetStr + "_" + runSetStr + "_" + time_str + extension));
-  //Config::SetDefault ("ns3::RadioBearerStatsCalculator::UlRlcOutputFilename", StringValue        (path + ulRlcOutName   + "_" + seedSetStr + "_" + runSetStr + "_" + time_str + extension));
-  //Config::SetDefault ("ns3::RadioBearerStatsCalculator::DlPdcpOutputFilename", StringValue       (path + dlPdcpOutName + "_" + seedSetStr + "_" + runSetStr + "_" + time_str + extension));
-  //Config::SetDefault ("ns3::RadioBearerStatsCalculator::UlPdcpOutputFilename", StringValue       (path + ulPdcpOutName + "_" + seedSetStr + "_" + runSetStr + "_" + time_str + extension));
+  Config::SetDefault ("ns3::RadioBearerStatsCalculator::DlRlcOutputFilename", StringValue        (path + dlRlcOutName   + "_" + seedSetStr + "_" + runSetStr + "_" + time_str + extension));
+  Config::SetDefault ("ns3::RadioBearerStatsCalculator::UlRlcOutputFilename", StringValue        (path + ulRlcOutName   + "_" + seedSetStr + "_" + runSetStr + "_" + time_str + extension));
+  Config::SetDefault ("ns3::RadioBearerStatsCalculator::DlPdcpOutputFilename", StringValue       (path + dlPdcpOutName + "_" + seedSetStr + "_" + runSetStr + "_" + time_str + extension));
+  Config::SetDefault ("ns3::RadioBearerStatsCalculator::UlPdcpOutputFilename", StringValue       (path + ulPdcpOutName + "_" + seedSetStr + "_" + runSetStr + "_" + time_str + extension));
   //Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::X2LinkDelay", TimeValue (MicroSeconds (500)));
   //Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::X2LinkDataRate", DataRateValue (DataRate ("1000Gb/s")));
   //Config::SetDefault ("ns3::MmWavePointToPointEpcHelper::X2LinkMtu",  UintegerValue (10000));
@@ -342,30 +389,56 @@ int main (int argc, char *argv[])
   // set UE distance
   for(uint32_t i = 0; i < numberOfNodes; i++)
   {
-      setPos (nodes.Get (i), 60, -20, 1);
-      setPos (nodes.Get (numberOfNodes + i), 200, 200, 0);
+      setPos (nodes.Get (i), 120, 20, 1);
+      setPos (nodes.Get (numberOfNodes + i), 300, 300, 0);
       ueNodes.Add(nodes.Get(i));
       serverNodes.Add(nodes.Get(i+numberOfNodes));
   }
 
-  double x_min = 40.0;
-  double x_max = 50.0;
-  double y_min = -10.0;
-  double y_max = 10.0;
-  double z_min = 0.0;
-  double z_max = 10.0;
-  Ptr<Building> b = CreateObject <Building> ();
-  b->SetBoundaries (Box (x_min, x_max, y_min, y_max, z_min, z_max));
-  b->SetBuildingType (Building::Residential);
-  b->SetExtWallsType (Building::ConcreteWithWindows);
-  b->SetNFloors (3);
-  b->SetNRoomsX (3);
-  b->SetNRoomsY (2);
+  bulding_cordination_t b1_cord;
+  b1_cord.x1 = 0.0;
+  b1_cord.x2 = 20.0;
+  b1_cord.y1 = 0.0;
+  b1_cord.y2 = 10.0;
+  b1_cord.z1 = 0.0;
+  b1_cord.z2 = 10.0;
+  auto b1 = set_and_install_building(b1_cord, nodes);
+
+  b1_cord.x1 = 40.0;
+  b1_cord.x2 = 60.0;
+  b1_cord.y1 = 0.0;
+  b1_cord.y2 = 10.0;
+  b1_cord.z1 = 0.0;
+  b1_cord.z2 = 10.0;
+  auto b2 = set_and_install_building(b1_cord, nodes);
+
+  b1_cord.x1 = 80.0;
+  b1_cord.x2 = 100.0;
+  b1_cord.y1 = 0.0;
+  b1_cord.y2 = 10.0;
+  b1_cord.z1 = 0.0;
+  b1_cord.z2 = 10.0;
+  auto b3 = set_and_install_building(b1_cord, nodes);
+  
+  b1_cord.x1 = 20.0;
+  b1_cord.x2 = 40.0;
+  b1_cord.y1 = 40.0;
+  b1_cord.y2 = 50.0;
+  b1_cord.z1 = 0.0;
+  b1_cord.z2 = 10.0;
+  auto b4 = set_and_install_building(b1_cord, nodes);
+
+  b1_cord.x1 = 60.0;
+  b1_cord.x2 = 80.0;
+  b1_cord.y1 = 40.0;
+  b1_cord.y2 = 50.0;
+  b1_cord.z1 = 0.0;
+  b1_cord.z2 = 10.0;
+  auto b5 = set_and_install_building(b1_cord, nodes);
 
   BuildingsHelper::Install (nodes);
 
-  Simulator::Schedule(Seconds(2), &ChangeSpeed, nodes.Get(0), Vector(0, 2, 0)); // start UE movement
-  //Simulator::Schedule(Seconds(22), &ChangeSpeed, nodes.Get(0), Vector(-2, 4.5, 0)); // start UE movement
+  Simulator::Schedule(Seconds(2), &ChangeSpeed, nodes.Get(0), Vector(-5, 0, 0)); // start UE movement
 
   // Left link: H1 <-> mmWave eNB
   NodeContainer enbNodes;
@@ -373,7 +446,7 @@ int main (int argc, char *argv[])
 
   mmWaveHelper->SetEpcHelper (mmWaveEpcHelper);
   Ptr<Node> pgw = mmWaveEpcHelper->GetPgwNode ();
-  setPos (enbNodes.Get (0), 0, 0, 3);
+  setPos (enbNodes.Get (0), 50, 60, 12);
   BuildingsHelper::Install (enbNodes);
 
   NetDeviceContainer enbMmWaveDevs = mmWaveHelper->InstallEnbDevice (enbNodes);
@@ -422,7 +495,7 @@ int main (int argc, char *argv[])
 
   lteHelper_2->SetEpcHelper (epcHelper_2);
   pgw = epcHelper_2->GetPgwNode ();
-  setPos (lteEnbNodes.Get (0), 0, 0, 3);
+  setPos (lteEnbNodes.Get (0), 50, -20, 12);
   BuildingsHelper::Install (lteEnbNodes);
   //Simulator::Schedule(Seconds(10.0), &changePos, lteEnbNodes.Get (0), 60, +15000, 3);
   
@@ -472,7 +545,7 @@ int main (int argc, char *argv[])
   LinuxStackHelper::RunIp (serverNodes.Get (i), Seconds (0.1), cmd_oss.str ().c_str ());
   }
  
-  setPos (pgw, 70, 0, 0);
+  setPos (pgw, 440, 0, 0);
   // default route
   for(uint32_t i = 0; i < numberOfNodes; i++)
   {
@@ -494,10 +567,14 @@ int main (int argc, char *argv[])
                    "4096 87380 87380");
   stack.SysctlSet (nodes, ".net.ipv4.tcp_wmem",
                    "4096 87380 87380");
+
   stack.SysctlSet (nodes, ".net.ipv4.tcp_congestion_control",
-                   ccAlg);
+                   cc_algo);
   stack.SysctlSet (nodes, ".net.mptcp.mptcp_scheduler",
-                   "default");
+                   sche_algo);
+  stack.SysctlSet (nodes, ".net.mptcp.mptcp_path_manager",
+                   path_m);
+
   stack.SysctlSet (nodes, ".net.mptcp.mptcp_checksum",
                     "1");
   stack.SysctlSet (nodes, ".net.ipv4.tcp_rmem",
@@ -519,10 +596,6 @@ int main (int argc, char *argv[])
   //                 "199999999");
   //stack.SysctlSet (nodes, ".net.core.wmem_default",
   //                 "199999999");
-  stack.SysctlSet (nodes, ".net.ipv4.tcp_congestion_control",
-                   ccAlg);
-  stack.SysctlSet (nodes, ".net.mptcp.mptcp_scheduler",
-                   "default");
   stack.SysctlSet (nodes, ".net.mptcp.mptcp_checksum",
                     "1");
   stack.SysctlSet (nodes, ".net.ipv4.tcp_low_latency",
@@ -562,7 +635,7 @@ int main (int argc, char *argv[])
 */
     dce.SetStackSize (1 << 30);
     // Launch iperf client on node 0
-    dce.SetBinary ("iperf");
+    dce.SetBinary ("iperf2");
     dce.ResetArguments ();
     dce.ResetEnvironment ();
     dce.AddArgument ("-c");
@@ -571,7 +644,7 @@ int main (int argc, char *argv[])
     dce.AddArgument ("-i");
     dce.AddArgument ("0.3");
     dce.AddArgument ("--time");
-    dce.AddArgument ("2");
+    dce.AddArgument ("24");
     dce.AddArgument ("-f");
     dce.AddArgument ("m");
     //dce.AddArgument ("-e");
@@ -587,7 +660,7 @@ int main (int argc, char *argv[])
 
     dce.SetStackSize (1 << 30);
     // Launch iperf server on node 1
-    dce.SetBinary ("iperf");
+    dce.SetBinary ("iperf2");
     dce.ResetArguments ();
     dce.ResetEnvironment ();
     dce.AddArgument ("-s");
@@ -600,15 +673,15 @@ int main (int argc, char *argv[])
     apps.Start (Seconds (1.5));
   }
 
-  //lteHelper_2->EnablePdcpTraces ();
-  //lteHelper_2->EnableRlcTraces ();
-  //mmWaveHelper->EnableTraces ();
+  lteHelper_2->EnablePdcpTraces ();
+  lteHelper_2->EnableRlcTraces ();
+  mmWaveHelper->EnableTraces ();
   //Config::Connect ("/NodeList/*/DeviceList/*/ns3::LteEnbRrc/ConnectionEstablished",
     //               MakeCallback (&NotifyConnectionEstablishedEnb));
   //Config::Connect ("/NodeList/*/DeviceList/*/ns3::LteUeRrc/ConnectionEstablished",
 //                   MakeCallback (&NotifyConnectionEstablishedUe));
 
- 
+  PrintGnuplottableBuildingListToFile ("buildings.txt"); 
   pointToPoint.EnablePcapAll("lte-mmwave2", false);
 
   // Output config store to txt format
@@ -619,10 +692,7 @@ int main (int argc, char *argv[])
   outputConfig2.ConfigureDefaults ();
   outputConfig2.ConfigureAttributes ();
   std::cout << "here" << std::endl;
-  Simulator::Stop (Seconds (5));
-  // AnimationInterface anim ("animation.xml");
-  //anim.SetMobilityPollInterval (Seconds (1));
-  //anim.EnablePacketMetadata (true);
+  Simulator::Stop (Seconds (27));
   Simulator::Run ();
   Simulator::Destroy ();
 

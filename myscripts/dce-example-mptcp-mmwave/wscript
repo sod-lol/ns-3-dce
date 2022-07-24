@@ -3,10 +3,10 @@
 import ns3waf
 
 def configure(conf):
-    ns3waf.check_modules(conf, ['core', 'internet', 'point-to-point', 'lte', 'mmwave' ], mandatory = True)
+    ns3waf.check_modules(conf, ['core', 'internet', 'point-to-point', 'lte', 'mmwave', 'netanim'], mandatory = True)
 
 def build(bld):
-    bld.build_a_script('dce', needed = ['core', 'internet', 'dce', 'point-to-point', 'lte', 'mmwave' ],
+    bld.build_a_script('dce', needed = ['core', 'internet', 'dce', 'point-to-point', 'lte', 'mmwave', 'netanim' ],
 				  target='bin/dce-example-mptcp-mmwave',
 				  source=['dce-example-mptcp-mmwave.cc'],
 				  )
